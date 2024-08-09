@@ -14,6 +14,7 @@ let db;
 
 app.prepare().then(async () => {
   const server = express();
+  server.use(express.json());
 
   // Connect to MongoDB
   const client = new MongoClient(MONGODB_URI, {
@@ -28,6 +29,13 @@ app.prepare().then(async () => {
   server.get("/api/data", async (req, res) => {
     const data = await db.collection("mycollection").find({}).toArray();
     res.json(data);
+  });
+
+// Handle POST request to add data to MongoDB
+  server.post("/api/data", async (req, res) => {
+    const { name, species } = req.body;
+    const result = await db.collection("mycollection").insertOne({ name, species });
+    res.status(200).json({ message: "Cadastro concluído com sucesso", data: result });
   });
 
   // Default catch-all handler to allow Next.js to handle all other routes
