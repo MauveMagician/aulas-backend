@@ -3,65 +3,114 @@
 import { useEffect, useState } from "react";
 
 export default function Home() {
-  const [data, setData] = useState([]);
-  const [name, setName] = useState("");
-  const [species, setSpecies] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  useEffect(() => {
-    fetch("/api/data")
-      .then((response) => response.json())
-      .then((data) => setData(data));
-  }, []);
-
-  const handleSubmit = async (e) => {
+  const handleSignUp = async (e) => {
     e.preventDefault();
-    console.log("Sending POST request to /api/data with name:", name, "and species:", species);
-    const response = await fetch("/api/data", {
+    console.log("Sending POST request to /api/signup with username:", username);
+    const response = await fetch("/api/signup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, species }),
+      body: JSON.stringify({ username, password }),
     });
     console.log("Response status:", response.status);
     if (response.ok) {
       const newData = await response.json();
       console.log("Response data:", newData);
-      setData([...data, newData.data]);
-      setName("");
-      setSpecies("");
-      fetch("/api/data")
-        .then((response) => response.json())
-        .then((data) => setData(data));
+      setUsername("");
+      setPassword("");
       alert(newData.message);
     } else {
-      console.error("Failed to submit data");
+      console.error("Failed to sign up");
     }
   };
 
+  const handleSignIn = async (e) => {
+    e.preventDefault();
+    console.log("Sending POST request to /api/signin with username:", username);
+    const response = await fetch("/api/signin", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+    });
+    console.log("Response status:", response.status);
+    if (response.ok) {
+      const newData = await response.json();
+      console.log("Response data:", newData);
+      setUsername("");
+      setPassword("");
+      document.cookie = `session=${newData.sessionId}; max-age=3600; path=/; SameSite=Strict; Secure`;
+      alert(newData.message);
+    } else {
+      console.error("Failed to sign in");
+    }
+  };
+
+  const [showCookieConsent, setShowCookieConsent] = useState(true);
+
+  const handleCookieConsent = (consent) => {
+    setShowCookieConsent(false);
+    if (consent) {
+      // Set a cookie to remember the user's consent
+      document.cookie = "cookieConsent=true; max-age=31536000; path=/; SameSite=Strict; Secure";
+    } else {
+      // Set a cookie to remember the user's refusal
+      document.cookie = "cookieConsent=false; max-age=31536000; path=/";
+    }
+  };
+
+  useEffect(() => {
+    // Check if the cookie consent has already been given
+    const consent = document.cookie.split("; ").find(row => row.startsWith("cookieConsent="));
+    if (consent) setShowCookieConsent(false);
+  }, []);
+
   return (
     <div>
-      <h1>Dados do MongoDB</h1>
-      <form onSubmit={handleSubmit}>
+      <h2>Sign Up</h2>
+      <form onSubmit={handleSignUp}>
         <input
           type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Add new item"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Username"
         />
         <input
-          type="text"
-          value={species}
-          onChange={(e) => setSpecies(e.target.value)}
-          placeholder="Add species"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
         />
-        <button type="submit">Add</button>
+        <button type="submit">Sign Up</button>
       </form>
-      <ul>
-        {data.map((item, index) => (
-          <li key={index}>{item.name} - {item.species}</li>
-        ))}
-      </ul>
+      <h2>Sign In</h2>
+      <form onSubmit={handleSignIn}>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Username"
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+        />
+        <button type="submit">Sign In</button>
+      </form>
+      {showCookieConsent && (
+        <div className="cookie-consent">
+          <p>We use cookies to improve your experience. By using our site, you agree to our use of cookies.</p>
+          <button onClick={() => handleCookieConsent(true)}>Accept</button>
+          <button onClick={() => handleCookieConsent(false)}>Refuse</button>
+        </div>
+      )}
     </div>
   );
 }
