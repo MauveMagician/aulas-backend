@@ -41,10 +41,10 @@ app.prepare().then(async () => {
     res.status(200).json({ message: "Sign up successful", data: result });
   });
 
-  // Handle POST request to sign in a user
+// Handle POST request to sign in a user
   server.post("/api/signin", async (req, res) => {
-    console.log("Attempting to sign in user:", username);
     const { username, password } = req.body;
+    console.log("Attempting to sign in user:", username);
     const user = await db.collection("users").findOne({ username, password });
     if (user) {
       req.session.userId = user._id;

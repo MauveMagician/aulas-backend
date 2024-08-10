@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 export default function Home() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [loggedInUser, setLoggedInUser] = useState(null);
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -45,6 +46,8 @@ export default function Home() {
       setUsername("");
       setPassword("");
       document.cookie = `session=${newData.sessionId}; max-age=3600; path=/; SameSite=Strict; Secure`;
+      document.cookie = `username=${username}; max-age=3600; path=/; SameSite=Strict; Secure`;
+      setLoggedInUser(username);
       alert(newData.message);
     } else {
       console.error("Failed to sign in");
@@ -68,42 +71,62 @@ export default function Home() {
     // Check if the cookie consent has already been given
     const consent = document.cookie.split("; ").find(row => row.startsWith("cookieConsent="));
     if (consent) setShowCookieConsent(false);
+
+    // Check if the user is already logged in
+    const usernameCookie = document.cookie.split("; ").find(row => row.startsWith("username="));
+    if (usernameCookie) {
+      const loggedInUsername = usernameCookie.split("=")[1];
+      setLoggedInUser(loggedInUsername);
+    }
   }, []);
 
   return (
     <div>
-      <h2>Sign Up</h2>
-      <form onSubmit={handleSignUp}>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-        />
-        <button type="submit">Sign Up</button>
-      </form>
-      <h2>Sign In</h2>
-      <form onSubmit={handleSignIn}>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-        />
-        <button type="submit">Sign In</button>
-      </form>
+      {loggedInUser ? (
+  <div>
+    <div>Currently logged in as {loggedInUser}</div>
+    <button onClick={() => {
+      document.cookie = "session=; max-age=0; path=/; SameSite=Strict; Secure";
+      document.cookie = "username=; max-age=0; path=/; SameSite=Strict; Secure";
+      setLoggedInUser(null);
+    }}>Logout</button>
+  </div>
+) : (
+        <>
+          <h2>Sign Up</h2>
+          <form onSubmit={handleSignUp}>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+            />
+            <button type="submit">Sign Up</button>
+          </form>
+          <h2>Sign In</h2>
+          <form onSubmit={handleSignIn}>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+            />
+            <button type="submit">Sign In</button>
+          </form>
+        </>
+      )}
       {showCookieConsent && (
         <div className="cookie-consent">
           <p>We use cookies to improve your experience. By using our site, you agree to our use of cookies.</p>
